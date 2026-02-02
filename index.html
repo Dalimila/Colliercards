@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <title>Collier Cards</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #0b0f1f 0%, #05070f 70%);
+      overflow-x: hidden;
+      color: #e8e9f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 2rem;
+      max-width: 600px;
+    }
+    h1 {
+      font-family: 'Georgia', serif;
+      font-weight: 700;
+      font-size: 2.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 2rem;
+      color: #ffffff;
+      text-shadow: 0 0 15px rgba(232,233,240,0.8);
+    }
+    button.main {
+      background: transparent;
+      border: 1px solid rgba(232,233,240,0.4);
+      color: #e8e9f0;
+      padding: 0.9rem 1.8rem;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 999px;
+      transition: all 0.3s ease;
+      margin-bottom: 1rem;
+    }
+    button.main:hover {
+      border-color: #e8e9f0;
+      transform: translateY(-1px);
+    }
+    button.song, button.share {
+      padding: 0.7rem 1.4rem;
+      font-size: 0.9rem;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 0.5rem 0.3rem;
+      font-family: 'Courier New', monospace;
+    }
+    button.song {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid #a0c4ff;
+      color: #a0c4ff;
+    }
+    button.song:hover {
+      background: rgba(160,196,255,0.15);
+    }
+    button.share {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid #ffc6ff;
+      color: #ffc6ff;
+    }
+    button.share:hover {
+      background: rgba(255,198,255,0.15);
+    }
+    .card {
+      margin-top: 2rem;
+      padding: 2rem;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(6px);
+      border: 2px solid rgba(160,196,255,0.5);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      position: relative;
+    }
+    .card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .task {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      white-space: pre-line;
+      margin-bottom: 1rem;
+    }
+    .buttons-container {
+      margin-top: 1.5rem;
+    }
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars"></canvas>
+  <div class="container">
+    <h1>Collier Cards</h1>
+    <button class="main" id="drawBtn">Vylosovat kartu</button>
+    <div id="card" class="card">
+      <div id="task" class="task"></div>
+      <div class="buttons-container" id="extra-buttons"></div>
+    </div>
+  </div>
+  <script>
+    var cards = [
+      {text: "Zazpivej jednu notu, ktera vystihuje tvou aktualni naladu.", hasSong: false},
+      {text: "Udelej rytmus jen pomoci tri casti tela.", hasSong: false},
+      {text: "Rekni sve jmeno jako kdyby bylo melodie.", hasSong: false},
+      {text: "Zkus si pobrukovat basovou linku k tichu.", hasSong: false},
+      {text: "Vytvor 5vterinovy soundtrack k tomu, co prave vidis.", hasSong: false},
+      {text: "Jeden clovek drzi jednu notu, ostatni pridavaji dalsi.", hasSong: false},
+      {text: "Najdete akord jen pomoci hlasu.", hasSong: false},
+      {text: "Jeden zacne ton, dalsi ho musi zkrasnit.", hasSong: false},
+      {text: "Vytvorte smutny akord a promените ho ve vesely.", hasSong: false},
+      {text: "Zkuste zazpivat ano tak, aby to znelo jako laska.", hasSong: false},
+      {text: "Vymysli groove pro zvuk projizd ejiciho auta.", hasSong: false},
+      {text: "Zatleskej rytmus sveho jmena.", hasSong: false},
+      {text: "Udelej beat jen pomoci sykavek.", hasSong: false},
+      {text: "Nekdo dela puls, nekdo synkopy.", hasSong: false},
+      {text: "Udelej rytmus, ktery by mohl bezet do nekonecna.", hasSong: false},
+      {text: "Zazpivej barvu, kterou mas nejradeji.", hasSong: false},
+      {text: "Jak zni pondeli?", hasSong: false},
+      {text: "Vymysli melodii pro tajemstvi.", hasSong: false},
+      {text: "Zazpivej, jak by znel dest na Mesici.", hasSong: false},
+      {text: "Udelej zvuk pro aha moment.", hasSong: false},
+      {text: "Zazpivej jednu notu plnou vdecnosti.", hasSong: false},
+      {text: "Udelej tri tony, ktere vyjadrují napeti.", hasSong: false},
+      {text: "Vymysli zvuk ulevy.", hasSong: false},
+      {text: "Zazpivej radost bez usmevu - jen hlasem.", hasSong: false},
+      {text: "Přehraj kratky vnitrni dialog.", hasSong: false},
+      {text: "Vymysli 5vterinovou pisen o cekani.", hasSong: false},
+      {text: "Udelej intro, ktere slibuje dobrodruzstvi.", hasSong: false},
+      {text: "Vytvor smycku, ktera by mohla byt v hitu.", hasSong: false},
+      {text: "Zazpivej konec pisne, ktera neexistuje.", hasSong: false},
+      {text: "Vymysli hymnu pro dnesni den.", hasSong: false},
+      {text: "Zazpivej jednu notu a posun ji mikrotonalne nahoru.", hasSong: true},
+      {text: "Zazpivej akord a pak ho rozpust.", hasSong: true},
+      {text: "Udelej hlasem modulaci do jine nalady.", hasSong: true},
+      {text: "Vytvor tri vrstvy hlasu: bas, stred, vysky.", hasSong: true},
+      {text: "Zazpivej jeden ton tak, aby znel jako cely svet.", hasSong: true},
+      {text: "Zazpivej kousek zname pisne o pul tonu vys.", hasSong: true},
+      {text: "Zazpivej refren o cely ton niz.", hasSong: true},
+      {text: "Zkus stejnou melodii ve stastne/smutne tonine.", hasSong: true},
+      {text: "Presun pisnick u do temne filmove verze.", hasSong: true},
+      {text: "Zazpivej ji, jako by byla v jazzovem klubu ve 3 rano.", hasSong: true},
+      {text: "Zazpivej znamou pisen, ale zmen prvni ton.", hasSong: true},
+      {text: "Kazdy dalsi vers posun o pulton.", hasSong: true},
+      {text: "Zazpivej ji, jako by byla psana pro deti.", hasSong: true},
+      {text: "Zazpivej ji, jako by to byl choral.", hasSong: true},
+      {text: "Zazpivej ji jako lullaby (ukolebavku).", hasSong: true},
+      {text: "Vezmi jednu notu z pisne a udelej z ni novou harmonii.", hasSong: true},
+      {text: "Najdi akord, ktery by tu pisen rozbil.", hasSong: true},
+      {text: "Udelej modulaci do uplne jine nalady.", hasSong: true},
+      {text: "Zazpivej jen basovou linku zname pisne.", hasSong: true},
+      {text: "Zazpivej jen harmonii - bez hlavni melodie.", hasSong: true},
+      {text: "Zazpivej stejny uryvek ve 3 ruznych toninach.", hasSong: true},
+      {text: "Udelej z popove pisne filmovou hudbu.", hasSong: true},
+      {text: "Přehraj veselou pisen jako pohrebni.", hasSong: true},
+      {text: "Přehraj smutnou pisen jako triumfalni.", hasSong: true},
+      {text: "Zazpivej pisen, jako by prave vyslo slunce.", hasSong: true},
+      {text: "Vezmi pisen a posun ji o nesmyslny interval.", hasSong: true},
+      {text: "Zazpivej ji jako by byla z jineho sveta.", hasSong: true},
+      {text: "Zazpivej jednu frazi v lydicke nalade.", hasSong: true},
+      {text: "Udelej z refrenu modulujici kolotoc.", hasSong: true},
+      {text: "Zazpivej konec pisne v uplne jine tonine.", hasSong: true}
+    ];
+
+    var songs = [
+      "Happy Birthday", "Let It Be", "Hallelujah", "Somewhere Over the Rainbow", "Twinkle Twinkle Little Star",
+      "Yesterday", "Imagine", "Stand By Me", "Jingle Bells", "As It Was",
+      "Love of My Life", "Golden", "Watermelon Sugar", "Prsi prsi jen se leje",
+      "Ach synku synku", "Kalamajka mik mik mik", "Skakal pes", "Kocka leze dirou", "Chci zas v tobe spat",
+      "Marie", "Tancovala ryba s rakom", "Norwegian Wood", "Staying Alive", "Light My Love",
+      "Boyfriends", "Hurt", "Still Haven't Found What I'm Looking For", "It Ain't Over till It's Over", "Highway to Hell",
+      "Knocking on Heaven's Door", "Heart of Gold", "The Chain", "Rocket Man", "Gypsy", "Ain't No Sunshine"
+    ];
+
+    var currentCardIndex = null;
+
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('card')) {
+      currentCardIndex = parseInt(urlParams.get('card'));
+    }
+
+    function showCard(index) {
+      currentCardIndex = index;
+      var card = document.getElementById('card');
+      var task = document.getElementById('task');
+      task.textContent = cards[index].text;
+      
+      var extraButtons = document.getElementById('extra-buttons');
+      extraButtons.innerHTML = '';
+      
+      if (cards[index].hasSong) {
+        var songBtn = document.createElement('button');
+        songBtn.textContent = 'Vyber pisen';
+        songBtn.className = 'song';
+        songBtn.addEventListener('click', drawSong);
+        extraButtons.appendChild(songBtn);
+      }
+      
+      var shareBtn = document.createElement('button');
+      shareBtn.textContent = 'Sdilet ukol';
+      shareBtn.className = 'share';
+      shareBtn.addEventListener('click', shareCard);
+      extraButtons.appendChild(shareBtn);
+      
+      card.classList.add('visible');
+    }
+
+    function drawCard(index) {
+      var randomIndex;
+      if (index !== null && index !== undefined) {
+        randomIndex = index;
+      } else {
+        randomIndex = Math.floor(Math.random() * cards.length);
+      }
+      showCard(randomIndex);
+    }
+
+    function drawSong() {
+      var song = songs[Math.floor(Math.random() * songs.length)];
+      var task = document.getElementById('task');
+      task.textContent += '\n\n🎵 ' + song;
+    }
+
+    function shareCard() {
+      var shareURL = window.location.origin + window.location.pathname + '?card=' + currentCardIndex;
+      
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareURL).then(function() {
+          alert('Odkaz zkopirovan do schranky!');
+        }).catch(function() {
+          prompt('Sdilej tento odkaz:', shareURL);
+        });
+      } else {
+        prompt('Sdilej tento odkaz:', shareURL);
+      }
+    }
+
+    document.getElementById('drawBtn').addEventListener('click', function() {
+      drawCard();
+    });
+
+    window.addEventListener('DOMContentLoaded', function() {
+      if (currentCardIndex !== null) {
+        drawCard(currentCardIndex);
+      }
+    });
+
+    var canvas = document.getElementById("stars");
+    var ctx = canvas.getContext("2d");
+    var w = canvas.width = window.innerWidth;
+    var h = canvas.height = window.innerHeight;
+
+    var stars = [];
+    var numStars = 120;
+    
+    function random(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    for (var i = 0; i < numStars; i++) {
+      stars.push({
+        x: random(0, w),
+        y: random(0, h),
+        radius: random(0.5, 2),
+        dx: random(-0.05, 0.05),
+        dy: random(-0.05, 0.05),
+        alpha: random(0.3, 1),
+        alphaDir: Math.random() < 0.5 ? -0.002 : 0.002,
+        color: ['#e8e9f0', '#a0c4ff', '#bdb2ff', '#ffc6ff'][Math.floor(Math.random() * 4)]
+      });
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, w, h);
+      
+      for (var i = 0; i < stars.length; i++) {
+        var s = stars[i];
+        s.x += s.dx;
+        s.y += s.dy;
+        s.alpha += s.alphaDir;
+        
+        if (s.alpha <= 0.2 || s.alpha >= 1) s.alphaDir *= -1;
+        if (s.x < 0) s.x = w;
+        if (s.x > w) s.x = 0;
+        if (s.y < 0) s.y = h;
+        if (s.y > h) s.y = 0;
+        
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        ctx.fillStyle = s.color;
+        ctx.globalAlpha = s.alpha;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+      
+      requestAnimationFrame(animate);
+    }
+    
+    animate();
+
+    window.addEventListener('resize', function() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>
